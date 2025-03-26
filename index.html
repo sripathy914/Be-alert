@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Alert App</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Weather Alert App</h1>
+            <div class="search-box">
+                <input type="text" id="cityInput" placeholder="Enter city name">
+                <button id="searchBtn"><i class="fas fa-search"></i></button>
+            </div>
+        </header>
+
+        <main>
+            <div class="weather-info">
+                <div class="current-weather">
+                    <h2 id="cityName">--</h2>
+                    <div class="temperature">
+                        <span id="temp">--</span>°C
+                    </div>
+                    <div class="weather-description" id="weatherDesc">--</div>
+                    <div class="weather-icon">
+                        <i id="weatherIcon" class="fas fa-sun"></i>
+                    </div>
+                </div>
+
+                <div class="weather-details">
+                    <div class="detail-item">
+                        <i class="fas fa-wind"></i>
+                        <span>Wind: </span>
+                        <span id="windSpeed">--</span> km/h
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-tint"></i>
+                        <span>Humidity: </span>
+                        <span id="humidity">--</span>%
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-compress-arrows-alt"></i>
+                        <span>Pressure: </span>
+                        <span id="pressure">--</span> hPa
+                    </div>
+                </div>
+
+                <div class="alerts-section">
+                    <h3>Weather Alerts</h3>
+                    <div id="alertsList" class="alerts-list">
+                        <!-- Alerts will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html> 
