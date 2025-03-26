@@ -5,7 +5,7 @@ import {
   faCloudMoon, faCloudRain, faCloudSunRain,
   faCloudMoonRain, faBolt, faSnowflake, 
   faSmog, faWind, faTint, faCompressArrowsAlt,
-  faSearch
+  faSearch, faSync, faLocationDot
 } from '@fortawesome/free-solid-svg-icons';
 import CustomAlertGenerator from './components/CustomAlertGenerator';
 import './App.css';
@@ -54,6 +54,59 @@ function App() {
   const [weatherData, setWeatherData] = useState(null);
   const [alerts, setAlerts] = useState([]);
   const [error, setError] = useState(null);
+  const [isAutoChecking, setIsAutoChecking] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [locationError, setLocationError] = useState(null);
+
+  const getWeatherByCoordinates = async (lat, lon) => {
+    try {
+      const response = await fetch(
+        `${BASE_URL}/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
+      );
+      const data = await response.json();
+
+      if (response.ok) {
+        setWeatherData(data);
+        setCity(data.name);
+        checkWeatherAlerts(data);
+        setError(null);
+        setLastUpdate(new Date());
+      } else {
+        setError(data.message || 'Error fetching weather data');
+        setWeatherData(null);
+        setAlerts([]);
+      }
+    } catch (error) {
+      setError('Error fetching weather data');
+      setWeatherData(null);
+      setAlerts([]);
+      console.error('Error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getCurrentLocation = () => {
+    setIsLoading(true);
+    setLocationError(null);
+
+    if (!navigator.geolocation) {
+      setLocationError('Geolocation is not supported by your browser');
+      setIsLoading(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        getWeatherByCoordinates(position.coords.latitude, position.coords.longitude);
+      },
+      (error) => {
+        setLocationError('Unable to retrieve your location');
+        setIsLoading(false);
+      }
+    );
+  };
 
   const getWeatherData = async (cityName) => {
     if (!cityName) {
@@ -69,6 +122,7 @@ function App() {
         setWeatherData(data);
         checkWeatherAlerts(data);
         setError(null);
+        setLastUpdate(new Date());
       } else {
         setError(data.message || 'City not found');
         setWeatherData(null);
@@ -79,6 +133,43 @@ function App() {
       setWeatherData(null);
       setAlerts([]);
       console.error('Error:', error);
+    }
+  };
+
+  // Modified useEffect for auto-checking
+  useEffect(() => {
+    let intervalId;
+    
+    if (isAutoChecking) {
+      if (weatherData) {
+        // If we have weather data, use the city name
+        getWeatherData(weatherData.name);
+      } else {
+        // If no weather data, try to get location
+        getCurrentLocation();
+      }
+      
+      // Set up interval for checking every 5 minutes
+      intervalId = setInterval(() => {
+        if (weatherData) {
+          getWeatherData(weatherData.name);
+        } else {
+          getCurrentLocation();
+        }
+      }, 5 * 60 * 1000); // 5 minutes in milliseconds
+    }
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isAutoChecking]);
+
+  const toggleAutoChecking = () => {
+    setIsAutoChecking(!isAutoChecking);
+    if (!isAutoChecking && !weatherData) {
+      getCurrentLocation();
     }
   };
 
@@ -119,6 +210,17 @@ function App() {
     <div className="container">
       <header>
         <h1>Be Alert</h1>
+        <div className="location-controls">
+          <button 
+            className={`location-btn ${isLoading ? 'loading' : ''}`}
+            onClick={getCurrentLocation}
+            disabled={isLoading}
+          >
+            <FontAwesomeIcon icon={faLocationDot} />
+            {isLoading ? 'Getting Location...' : 'Use My Location'}
+          </button>
+          {locationError && <div className="error-message">{locationError}</div>}
+        </div>
         <form className="search-box" onSubmit={handleSubmit}>
           <input
             type="text"

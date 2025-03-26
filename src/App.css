@@ -171,28 +171,34 @@ button:hover {
 }
 
 .custom-alert-section {
-  background: #fff;
+  background: #f8f9fa;
   border-radius: 15px;
-  padding: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  margin-top: 20px;
+  padding: 30px;
+  margin-top: 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .generate-btn {
   background: #00b4db;
   color: white;
   border: none;
-  padding: 10px 20px;
-  border-radius: 25px;
+  padding: 15px 30px;
+  border-radius: 30px;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 1.1rem;
   transition: all 0.3s ease;
+  margin-top: 25px;
+  margin-bottom: 25px;
   width: 100%;
-  margin-bottom: 15px;
+  max-width: 300px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
 }
 
 .generate-btn:hover {
-  background: #0083b0;
+  background: #0083a3;
   transform: translateY(-2px);
 }
 
@@ -203,29 +209,82 @@ button:hover {
 }
 
 .alert-preview {
-  background: #f8f9fa;
-  border-radius: 10px;
-  padding: 15px;
-  margin-top: 15px;
+  background: white;
+  padding: 50px;
+  border-radius: 12px;
+  margin: 25px 0;
+  border: 1px solid #e9ecef;
+  white-space: pre-wrap;
+  line-height: 1.6;
+  font-size: 1.05rem;
 }
 
-.alert-content {
-  white-space: pre-line;
-  margin-bottom: 15px;
-  line-height: 1.5;
-}
 
-.alert-content p {
-  margin: 5px 0;
-}
 
-.alert-actions {
+.copy-btn, .share-btn {
+  background: #00b4db;
+  color: white;
+  border: 1px black;
   display: flex;
-  gap: 10px;
-  justify-content: flex-end;
+  flex-direction: row;
+  border-radius: 50%;
+  width: 300px;
+  height: 100px;
+  cursor: pointer;
+  
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  font-size: 1rem;
 }
 
-.action-btn {
+.copy-btn:hover, .share-btn:hover {
+  background: #0083b0;
+  transform: scale(1.05);
+}
+
+@media (max-width: 768px) {
+  .share-controls {
+    gap: 10px;
+  }
+
+  .copy-btn, .share-btn {
+    width: 45px;
+    height: 45px;
+  }
+}
+
+.copy-status {
+  color: #28a745;
+  text-align: center;
+  margin: 15px 0;
+  font-size: 1rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.copy-status.visible {
+  opacity: 1;
+}
+
+.share-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.auto-check-controls {
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.auto-check-btn {
   background: #fff;
   border: 1px solid #00b4db;
   color: #00b4db;
@@ -234,75 +293,104 @@ button:hover {
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
   transition: all 0.3s ease;
 }
 
-.action-btn:hover {
+.auto-check-btn:hover {
   background: #00b4db;
   color: white;
 }
 
-.share-options {
-  margin-top: 15px;
-  padding: 15px;
-  background: #f8f9fa;
-  border-radius: 10px;
+.auto-check-btn.active {
+  background: #00b4db;
+  color: white;
 }
 
-.share-options h4 {
-  margin-bottom: 10px;
-  color: #333;
+.auto-check-btn .fa-sync {
+  transition: transform 0.3s ease;
 }
 
-.share-buttons {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+.auto-check-btn .fa-sync.spinning {
+  animation: spin 2s linear infinite;
+}
+
+.last-update {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.location-controls {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 10px;
 }
 
-.share-buttons button {
+.location-btn {
   background: #fff;
   border: 1px solid #00b4db;
   color: #00b4db;
-  padding: 8px;
-  border-radius: 20px;
+  padding: 10px 20px;
+  border-radius: 25px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   transition: all 0.3s ease;
+  font-size: 1rem;
+  width: auto;
+  height: auto;
 }
 
-.share-buttons button:hover {
+.location-btn:hover {
   background: #00b4db;
   color: white;
+  transform: translateY(-2px);
 }
 
-@media (max-width: 480px) {
-  .container {
-    padding: 20px;
-  }
+.location-btn:disabled {
+  background: #f8f9fa;
+  color: #adb5bd;
+  cursor: not-allowed;
+  transform: none;
+}
 
-  .weather-details {
-    grid-template-columns: 1fr;
-  }
+.location-btn.loading {
+  position: relative;
+  color: transparent;
+}
 
-  .temperature {
-    font-size: 3rem;
-  }
+.location-btn.loading::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  top: 50%;
+  left: 50%;
+  margin: -8px 0 0 -8px;
+  border: 2px solid #00b4db;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
 
-  .weather-icon {
-    font-size: 2.5rem;
-  }
-
-  .alert-actions {
-    flex-direction: column;
-  }
-
-  .action-btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .share-buttons {
-    grid-template-columns: 1fr;
-  }
+.error-message {
+  color: #dc3545;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 5px 10px;
+  background: #f8d7da;
+  border-radius: 5px;
+  animation: slideIn 0.3s ease;
 } 
