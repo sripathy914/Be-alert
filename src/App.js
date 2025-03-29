@@ -1,46 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faSun, faMoon, faCloud, faCloudSun, 
-  faCloudMoon, faCloudRain, faCloudSunRain,
-  faCloudMoonRain, faBolt, faSnowflake, 
-  faSmog, faWind, faTint, faCompressArrowsAlt,
-  faSearch, faSync, faLocationDot
-} from '@fortawesome/free-solid-svg-icons';
-import CustomAlertGenerator from './components/CustomAlertGenerator';
+import { faSearch, faWind, faTint, faCompressArrowsAlt, faSun, faCloud, faCloudRain, faCloudSun, faCloudShowersHeavy, faBolt, faSnowflake, faSmog, faLocationDot } from '@fortawesome/free-solid-svg-icons';
 import './App.css';
+import CustomAlertGenerator from './components/CustomAlertGenerator';
+import { getWeatherData } from './services/weatherService';
 
-
-const API_KEY = '154563bad3002edd770740b01695beeb'; 
-const BASE_URL = 'https://api.openweathermap.org/data/2.5';
-
-// Weather alert thresholds
-const ALERT_THRESHOLDS = {
-  temp: {
-    high: 35, // High temperature alert threshold (°C)
-    low: 5    // Low temperature alert threshold (°C)
-  },
-  wind: 30,     // High wind speed alert threshold (km/h)
-  humidity: {
-    high: 80, // High humidity alert threshold (%)
-    low: 20   // Low humidity alert threshold (%)
-  }
-};
-
-// Weather icon mapping
 const iconMap = {
   '01d': faSun,
-  '01n': faMoon,
+  '01n': faSun,
   '02d': faCloudSun,
-  '02n': faCloudMoon,
+  '02n': faCloudSun,
   '03d': faCloud,
   '03n': faCloud,
   '04d': faCloud,
   '04n': faCloud,
-  '09d': faCloudRain,
-  '09n': faCloudRain,
-  '10d': faCloudSunRain,
-  '10n': faCloudMoonRain,
+  '09d': faCloudShowersHeavy,
+  '09n': faCloudShowersHeavy,
+  '10d': faCloudRain,
+  '10n': faCloudRain,
   '11d': faBolt,
   '11n': faBolt,
   '13d': faSnowflake,
@@ -52,187 +29,157 @@ const iconMap = {
 function App() {
   const [city, setCity] = useState('');
   const [weatherData, setWeatherData] = useState(null);
+  const [error, setError] = useState('');
   const [alerts, setAlerts] = useState([]);
-  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [locationError, setLocationError] = useState('');
   const [isAutoChecking, setIsAutoChecking] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [locationError, setLocationError] = useState(null);
+
+  const checkWeatherConditions = (data) => {
+    const newAlerts = [];
+    
+    if (data.main.temp > 35) {
+      newAlerts.push('🌡️ High Temperature Alert: Temperature is above 35°C');
+    }
+    if (data.main.temp < 5) {
+      newAlerts.push('❄️ Low Temperature Alert: Temperature is below 5°C');
+    }
+    if (data.wind.speed > 20) {
+      newAlerts.push('💨 Strong Wind Alert: Wind speed is above 20 km/h');
+    }
+    if (data.main.humidity > 80) {
+      newAlerts.push('💧 High Humidity Alert: Humidity is above 80%');
+    }
+    if (data.weather[0].main === 'Rain') {
+      newAlerts.push('🌧️ Rain Alert: Rain is expected');
+    }
+    if (data.weather[0].main === 'Snow') {
+      newAlerts.push('🌨️ Snow Alert: Snow is expected');
+    }
+    if (data.weather[0].main === 'Thunderstorm') {
+      newAlerts.push('⚡ Thunderstorm Alert: Thunderstorm is expected');
+    }
+    
+    setAlerts(newAlerts);
+  };
+
+  const fetchWeatherData = async (cityName) => {
+    try {
+      setIsLoading(true);
+      setError('');
+      const data = await getWeatherData(cityName);
+      setWeatherData(data);
+      checkWeatherConditions(data);
+      setLastUpdate(new Date());
+    } catch (err) {
+      setError('Failed to fetch weather data. Please try again.');
+      setWeatherData(null);
+      setAlerts([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getWeatherByCoordinates = async (lat, lon) => {
     try {
-      const response = await fetch(
-        `${BASE_URL}/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
-      );
-      const data = await response.json();
-
-      if (response.ok) {
-        setWeatherData(data);
-        setCity(data.name);
-        checkWeatherAlerts(data);
-        setError(null);
-        setLastUpdate(new Date());
-      } else {
-        setError(data.message || 'Error fetching weather data');
-        setWeatherData(null);
-        setAlerts([]);
-      }
-    } catch (error) {
-      setError('Error fetching weather data');
+      setIsLoading(true);
+      setError('');
+      const data = await getWeatherData(null, lat, lon);
+      setWeatherData(data);
+      checkWeatherConditions(data);
+      setLastUpdate(new Date());
+    } catch (err) {
+      setError('Failed to fetch weather data for your location. Please try again.');
       setWeatherData(null);
       setAlerts([]);
-      console.error('Error:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
   const getCurrentLocation = () => {
-    setIsLoading(true);
-    setLocationError(null);
-
     if (!navigator.geolocation) {
       setLocationError('Geolocation is not supported by your browser');
-      setIsLoading(false);
       return;
     }
+
+    setIsLoading(true);
+    setLocationError('');
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
         getWeatherByCoordinates(position.coords.latitude, position.coords.longitude);
       },
       (error) => {
-        setLocationError('Unable to retrieve your location');
+        setLocationError('Unable to get your location. Please check your location settings.');
         setIsLoading(false);
       }
     );
   };
 
-  const getWeatherData = async (cityName) => {
-    if (!cityName) {
-      setError('Please enter a city name');
-      return;
-    }
-
-    try {
-      const response = await fetch(`${BASE_URL}/weather?q=${cityName}&appid=${API_KEY}&units=metric`);
-      const data = await response.json();
-
-      if (response.ok) {
-        setWeatherData(data);
-        checkWeatherAlerts(data);
-        setError(null);
-        setLastUpdate(new Date());
-      } else {
-        setError(data.message || 'City not found');
-        setWeatherData(null);
-        setAlerts([]);
-      }
-    } catch (error) {
-      setError('Error fetching weather data');
-      setWeatherData(null);
-      setAlerts([]);
-      console.error('Error:', error);
-    }
-  };
-
-  // Modified useEffect for auto-checking
   useEffect(() => {
-    let intervalId;
-    
-    if (isAutoChecking) {
-      if (weatherData) {
-        // If we have weather data, use the city name
-        getWeatherData(weatherData.name);
-      } else {
-        // If no weather data, try to get location
-        getCurrentLocation();
-      }
-      
-      // Set up interval for checking every 5 minutes
-      intervalId = setInterval(() => {
-        if (weatherData) {
-          getWeatherData(weatherData.name);
+    let interval;
+    if (isAutoChecking && weatherData) {
+      const checkWeather = async () => {
+        if (weatherData.coord) {
+          await getWeatherByCoordinates(weatherData.coord.lat, weatherData.coord.lon);
         } else {
-          getCurrentLocation();
+          await fetchWeatherData(weatherData.name);
         }
-      }, 5 * 60 * 1000); // 5 minutes in milliseconds
+      };
+      
+      checkWeather();
+      interval = setInterval(checkWeather, 5 * 60 * 1000);
     }
-
     return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
+      if (interval) {
+        clearInterval(interval);
       }
     };
-  }, [isAutoChecking]);
-
-  const toggleAutoChecking = () => {
-    setIsAutoChecking(!isAutoChecking);
-    if (!isAutoChecking && !weatherData) {
-      getCurrentLocation();
-    }
-  };
-
-  const checkWeatherAlerts = (data) => {
-    const newAlerts = [];
-    const temp = data.main.temp;
-    const wind = data.wind.speed;
-    const humidity = data.main.humidity;
-
-    // Temperature alerts
-    if (temp >= ALERT_THRESHOLDS.temp.high) {
-      newAlerts.push(`High temperature alert: ${temp}°C`);
-    } else if (temp <= ALERT_THRESHOLDS.temp.low) {
-      newAlerts.push(`Low temperature alert: ${temp}°C`);
-    }
-
-    // Wind speed alert
-    if (wind >= ALERT_THRESHOLDS.wind) {
-      newAlerts.push(`High wind alert: ${wind} km/h`);
-    }
-
-    // Humidity alerts
-    if (humidity >= ALERT_THRESHOLDS.humidity.high) {
-      newAlerts.push(`High humidity alert: ${humidity}%`);
-    } else if (humidity <= ALERT_THRESHOLDS.humidity.low) {
-      newAlerts.push(`Low humidity alert: ${humidity}%`);
-    }
-
-    setAlerts(newAlerts);
-  };
+  }, [isAutoChecking, weatherData]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    getWeatherData(city);
+    if (city.trim()) {
+      fetchWeatherData(city);
+    }
+  };
+
+  const toggleAutoChecking = () => {
+    setIsAutoChecking(!isAutoChecking);
   };
 
   return (
     <div className="container">
       <header>
         <h1>Be Alert</h1>
-        <div className="location-controls">
-          <button 
-            className={`location-btn ${isLoading ? 'loading' : ''}`}
-            onClick={getCurrentLocation}
-            disabled={isLoading}
-          >
-            <FontAwesomeIcon icon={faLocationDot} />
-            {isLoading ? 'Getting Location...' : 'Use My Location'}
-          </button>
-          {locationError && <div className="error-message">{locationError}</div>}
-        </div>
-        <form className="search-box" onSubmit={handleSubmit}>
+      </header>
+
+      <div className="search-section">
+        <form onSubmit={handleSubmit} className="search-box">
           <input
             type="text"
             value={city}
             onChange={(e) => setCity(e.target.value)}
             placeholder="Enter city name"
+            disabled={isLoading}
           />
-          <button type="submit">
+          <button type="submit" className="search-btn" disabled={isLoading}>
             <FontAwesomeIcon icon={faSearch} />
           </button>
         </form>
-      </header>
+
+        <button 
+          className={`location-btn ${isLoading ? 'loading' : ''}`}
+          onClick={getCurrentLocation}
+          disabled={isLoading}
+        >
+          <FontAwesomeIcon icon={faLocationDot} />
+          Use My Location
+        </button>
+        {locationError && <div className="error-message">{locationError}</div>}
+      </div>
 
       <main>
         {error && <div className="alert-item error">{error}</div>}
